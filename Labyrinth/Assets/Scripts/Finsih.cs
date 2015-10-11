@@ -13,7 +13,7 @@ public class Finsih : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        Debug.Log(other.name);
+        //Debug.Log(other.name);
         if (other.name == "Player")
         {
             Destroy(this.gameObject);

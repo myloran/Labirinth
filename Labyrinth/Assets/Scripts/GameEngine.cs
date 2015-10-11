@@ -34,7 +34,7 @@ public class GameEngine : MonoBehaviour
         BuildLabytinth();
         Object p = Instantiate(player, new Vector3(0.0f, 1.5f, height * 0.8f - 0.4f), Quaternion.identity);
         p.name = "Player";
-        Instantiate(finish, new Vector3((height - 1) * 0.8f, 0, 0.4f), Quaternion.identity);
+        Instantiate(finish, new Vector3((height - 1) * 0.8f * 1.8f - 0.15f, 0, 0.4f), Quaternion.identity);
 	}
 
     public void Restart()
@@ -196,9 +196,9 @@ public class GameEngine : MonoBehaviour
             }
         //Рисуем стену снизу и справа от лабиринта
         for (int i = 0; i < width; i++)
-            Instantiate(up_wall, new Vector3(i * cellSize, 0, width * cellSize), Quaternion.identity);
+            Instantiate(up_wall, new Vector3(i * cellSize, 0, width * cellSize / 1.7f), Quaternion.identity);
         for (int i = 0; i < height; i++)
-            Instantiate(left_wall, new Vector3(height * cellSize - 0.4f, 0, i * cellSize + 0.4f), Quaternion.identity);
+            Instantiate(left_wall, new Vector3(height * cellSize * 1.7f - 0.4f, 0, i * cellSize + 0.4f), Quaternion.identity);
 
         //Рисуем пол
         GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
