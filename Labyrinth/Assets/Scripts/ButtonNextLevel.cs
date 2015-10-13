@@ -11,5 +11,10 @@ public class ButtonNextLevel : MonoBehaviour
     public void NextLevelButton(string levelName)
     {
         Application.LoadLevel(levelName);
+        Time.timeScale = 1;
+    }
+    public void Resume()
+    {
+        Time.timeScale = 1;
     }
 }

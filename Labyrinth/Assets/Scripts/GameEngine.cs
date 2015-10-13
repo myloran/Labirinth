@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class GameEngine : MonoBehaviour 
 {
@@ -7,9 +8,12 @@ public class GameEngine : MonoBehaviour
     public Transform finish;
     public Transform left_wall;
     public Transform up_wall;
+    public GameObject Canvas;
 
     public int width = 5;
     public int height = 5;
+
+    bool isPaused = false;
 
     Loc[,] Maze;
     int[,] Mark;
@@ -37,9 +41,39 @@ public class GameEngine : MonoBehaviour
         Instantiate(finish, new Vector3((height - 1) * 0.8f * 1.8f - 0.15f, 0, 0.4f), Quaternion.identity);
 	}
 
+    void Update()
+    {
+            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Menu))
+            {
+                if (!isPaused)
+                {
+                    Canvas.transform.Find("PausePanel").gameObject.SetActive(true);
+                    (Canvas.GetComponent("Image") as Image).enabled = true;
+                    Canvas.transform.Find("MobileJoystick").gameObject.GetComponent<UnityStandardAssets.CrossPlatformInput.Joystick>().enabled = false;
+
+                    Time.timeScale = 0;
+
+                    isPaused = true;
+                }
+                else
+                {
+                    Canvas.transform.Find("PausePanel").gameObject.SetActive(false);
+                    (Canvas.GetComponent("Image") as Image).enabled = false;
+                    Canvas.transform.Find("MobileJoystick").gameObject.GetComponent<UnityStandardAssets.CrossPlatformInput.Joystick>().enabled = true;
+
+                    Time.timeScale = 1;
+
+                    isPaused = false;
+                }
+            }
+    }
+
     public void Restart()
     {
-        Application.LoadLevel(1);
+        //UnityStandardAssets.CrossPlatformInput.CrossPlatformInputManager.get
+
+        Application.LoadLevel("Game");
+        
         Time.timeScale = 1;
     }
 
@@ -183,32 +217,36 @@ public class GameEngine : MonoBehaviour
     {
         width = Maze.GetLength(0) - 1;
         height = Maze.GetLength(1) - 1;
+        GameObject empty = new GameObject("Labyrinth");
+        empty.isStatic = true;
+        empty.transform.position = new Vector3(0,0,0);
 
         for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
             {
                 //Если есть вертикальная стена - рисуем ее
                 if (Maze[x, y].up_wall)
-                    Instantiate(up_wall, new Vector3(x * cellSize, 0, y * cellSize), Quaternion.identity);
+                    (Instantiate(up_wall, new Vector3(x * cellSize, 0, y * cellSize), Quaternion.identity) as Transform).SetParent(empty.transform);
                 //Если есть горизонтальная стена - рисуем ее
                 if (Maze[x, y].left_wall)
-                    Instantiate(left_wall, new Vector3(x * cellSize - 0.4f, 0, y * cellSize + 0.4f), Quaternion.identity);
+                    (Instantiate(left_wall, new Vector3(x * cellSize - 0.4f, 0, y * cellSize + 0.4f), Quaternion.identity) as Transform).SetParent(empty.transform);
             }
         //Рисуем стену снизу и справа от лабиринта
         for (int i = 0; i < width; i++)
-            Instantiate(up_wall, new Vector3(i * cellSize, 0, width * cellSize / 1.7f), Quaternion.identity);
+            (Instantiate(up_wall, new Vector3(i * cellSize, 0, width * cellSize / 1.7f), Quaternion.identity) as Transform).SetParent(empty.transform);
         for (int i = 0; i < height; i++)
-            Instantiate(left_wall, new Vector3(height * cellSize * 1.7f - 0.4f, 0, i * cellSize + 0.4f), Quaternion.identity);
+            (Instantiate(left_wall, new Vector3(height * cellSize * 1.7f - 0.4f, 0, i * cellSize + 0.4f), Quaternion.identity) as Transform).SetParent(empty.transform);
 
         //Рисуем пол
         GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        plane.transform.localScale += new Vector3(100, 0, 100);
+        plane.transform.localScale += new Vector3(1, 0, 1);
         plane.GetComponent<Renderer>().material = Resources.Load("planeMaterial", typeof(Material)) as Material;
+        plane.transform.SetParent(empty.transform);
         //plane.transform.localScale += new Vector3(0.1f * (width - 11), 0, 0.1f * (height - 11));
         //Debug.Log(plane.transform.position);
 
-        plane.transform.position = new Vector3(width * 0.3f/*1.5f*/, -0.5f, height * 0.3f + 0.4f/*1.9f*/);
-        
+        plane.transform.position = new Vector3(width * 0.4f, -0.5f, height * 0.4f);
+        //empty.transform.SetParent(empty.transform);
     }
 
 }

@@ -27,12 +27,18 @@ namespace UnityStandardAssets.CrossPlatformInput
 
 		void OnEnable()
 		{
-			CreateVirtualAxes();
+			//CreateVirtualAxes();
 		}
 
         void Start()
         {
             m_StartPos = transform.position;
+            if (CrossPlatformInputManager.AxisExists("Horizontal"))
+            {
+                CrossPlatformInputManager.UnRegisterVirtualAxis("Horizontal");
+                CrossPlatformInputManager.UnRegisterVirtualAxis("Vertical");
+            }
+            CreateVirtualAxes();
         }
 
 		void UpdateVirtualAxes(Vector3 value)
@@ -78,17 +84,18 @@ namespace UnityStandardAssets.CrossPlatformInput
 			if (m_UseX)
 			{
 				int delta = (int)(data.position.x - m_StartPos.x);
-				delta = Mathf.Clamp(delta, - MovementRange, MovementRange);
+				//delta = Mathf.Clamp(delta, - MovementRange, MovementRange);
 				newPos.x = delta;
 			}
 
 			if (m_UseY)
 			{
 				int delta = (int)(data.position.y - m_StartPos.y);
-				delta = Mathf.Clamp(delta, -MovementRange, MovementRange);
+				//delta = Mathf.Clamp(delta, -MovementRange, MovementRange);
 				newPos.y = delta;
 			}
-			transform.position = new Vector3(m_StartPos.x + newPos.x, m_StartPos.y + newPos.y, m_StartPos.z + newPos.z);
+			//transform.position = new Vector3(m_StartPos.x + newPos.x, m_StartPos.y + newPos.y, m_StartPos.z + newPos.z);
+            transform.position = Vector3.ClampMagnitude(new Vector3(newPos.x, newPos.y, newPos.z), MovementRange) + m_StartPos;
 			UpdateVirtualAxes(transform.position);
 		}
 
@@ -105,14 +112,16 @@ namespace UnityStandardAssets.CrossPlatformInput
 		void OnDisable()
 		{
 			// remove the joysticks from the cross platform input
-			if (m_UseX)
+            m_HorizontalVirtualAxis.Update(0);
+            m_VerticalVirtualAxis.Update(0);
+			/*if (m_UseX)
 			{
 				m_HorizontalVirtualAxis.Remove();
 			}
 			if (m_UseY)
 			{
 				m_VerticalVirtualAxis.Remove();
-			}
+			}*/
 		}
 	}
 }

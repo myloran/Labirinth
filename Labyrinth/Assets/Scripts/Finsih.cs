@@ -8,7 +8,7 @@ public class Finsih : MonoBehaviour
 
     void Start()    
     {
-        startText = GameObject.Find("GameStartsText").GetComponent<Text>();
+        startText = GameObject.Find("OnStartText").GetComponent<Text>();
     }
 
     void OnTriggerEnter(Collider other)
