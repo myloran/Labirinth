@@ -4,16 +4,27 @@ using UnityEngine.UI;
 
 public class GameEngine : MonoBehaviour 
 {
-    public Transform player;
-    public Transform finish;
+    public GameObject player;
+    public GameObject finish;
     public Transform left_wall;
     public Transform up_wall;
     public GameObject Canvas;
+    public Text keysText;
+    public Text timeText;
 
     public int width = 5;
     public int height = 5;
 
+    public GameObject starV0;
+    public GameObject starV1;
+    public GameObject starV2;
+    public GameObject starV3;
+
     bool isPaused = false;
+    GameObject p, f;
+    LevelData level;
+    int countOfKeys;
+    int keysToFinish;
 
     Loc[,] Maze;
     int[,] Mark;
@@ -22,24 +33,130 @@ public class GameEngine : MonoBehaviour
     int[] dy = { 0, -1, 0, 1 };
     float cellSize = 0.8f;
 
-    struct Loc
-    {
-        public bool left_wall, up_wall;
-    }
-
-    struct Wall
-    {
-        public int x, y, dx, dy;
-    }
-
 	void Start () 
     {
         Application.targetFrameRate = 60;
-        BuildLabytinth();
-        Object p = Instantiate(player, new Vector3(0.0f, 1.5f, height * 0.8f - 0.4f), Quaternion.identity);
-        p.name = "Player";
-        Instantiate(finish, new Vector3((height - 1) * 0.8f * 1.8f - 0.15f, 0, 0.4f), Quaternion.identity);
+        if (Data.IsContinue)
+        {
+            Data.Load();
+            Maze = Data.lastGame.Maze;
+            ShowMaze(Maze);
+            p = (GameObject)Instantiate(player, Data.lastGame.playerPosition, Quaternion.identity);
+            p.name = "Player";
+            f = (GameObject)Instantiate(finish, Data.lastGame.keysPosition[Data.lastGame.keysPosition.Length - 1], Quaternion.identity);
+
+            Data.IsContinue = false;
+        }
+        else
+        {
+            if (Data.campaignLevel != 0)
+            {
+                Data.LoadLevels();
+                level = Data.levels[Data.campaignLevel - 1];
+                countOfKeys = level.countOfKeys;
+                keysToFinish = level.countOfKeysDuringGame;
+                Debug.Log(countOfKeys);
+                keysText.text = (countOfKeys - 1).ToString();
+                timeText.text = level.totalTime.ToString();
+                BuildLabytinth();
+                p = (GameObject)Instantiate(player, new Vector3(0.0f, 1.5f, height * 0.8f - 0.4f), Quaternion.identity);
+                p.name = "Player";
+                if (countOfKeys > 1)
+                {
+                    if (countOfKeys > level.countOfKeysDuringGame)
+                    {
+                        CreateKeys(level.countOfKeysDuringGame);
+                        //countOfKeys -= level.countOfKeysDuringGame;
+                    }
+                    else if (countOfKeys <= level.countOfKeysDuringGame)
+                    {
+                        CreateKeys(countOfKeys - 1);
+                        //countOfKeys -= countOfKeys - 1;
+                    }
+                }
+                else if (countOfKeys == 1)
+                {
+                    f = (GameObject)Instantiate(finish, new Vector3(16 * 0.8f, 0, 0.4f), Quaternion.identity);
+                    countOfKeys--;
+                }
+
+                InvokeRepeating("UpdateText", 2.2f, 1);
+            }
+            else
+            {
+                BuildLabytinth();
+                p = (GameObject)Instantiate(player, new Vector3(0.0f, 1.5f, height * 0.8f - 0.4f), Quaternion.identity);
+                p.name = "Player";
+                f = (GameObject)Instantiate(finish, new Vector3((height - 1) * 0.8f * 1.8f - 0.15f, 0, 0.4f), Quaternion.identity);
+            }
+        }
 	}
+
+    void CreateKeys(int number)
+    {
+        countOfKeys -= number;
+        for (int i = 0; i < number; i++)
+        {
+            Instantiate(finish, new Vector3(Random.Range(0, 16) * 0.8f, 0, Random.Range(0, 9) * 0.8f + 0.4f), Quaternion.identity);
+        }
+    }
+    public void KeyFounded() 
+    {
+        Debug.Log(countOfKeys);
+        Debug.Log(keysToFinish);
+        if (countOfKeys > 1)
+        {
+            CreateKeys(1);
+            Canvas.transform.Find("timeText").gameObject.GetComponent<Text>().text = (int.Parse(Canvas.transform.Find("timeText").gameObject.GetComponent<Text>().text) + level.keyTime).ToString();
+        }
+        else if (countOfKeys == 1 && keysToFinish-- == 1)
+        {
+            f = (GameObject)Instantiate(finish, new Vector3(16 * 0.8f, 0, 0.4f), Quaternion.identity);
+            countOfKeys--;
+            Canvas.transform.Find("timeText").gameObject.GetComponent<Text>().text = (int.Parse(Canvas.transform.Find("timeText").gameObject.GetComponent<Text>().text) + level.keyTime).ToString();
+        }
+        else if (countOfKeys == 0)
+        {
+            //Stop the game and show victory screen:
+            Time.timeScale = 0;
+            GameObject victoryScreen = Canvas.transform.Find("VictoryScreen").gameObject;
+            victoryScreen.SetActive(true);
+            victoryScreen.transform.Find("Text").gameObject.GetComponent<Text>().text = "Уровень пройден!";
+                
+            //Record player rating and show star:
+            Data.levels[Data.campaignLevel - 1].timeLeft = level.totalTime;
+            float time = int.Parse(Canvas.transform.Find("timeText").gameObject.GetComponent<Text>().text);
+            if (time < level.timeFor2star)
+            {
+                Data.levels[Data.campaignLevel - 1].star = 1;
+                GameObject star = (GameObject)Instantiate(starV1, new Vector2(0, 50), Quaternion.identity);
+                star.transform.SetParent(Canvas.transform.Find("VictoryScreen"), false);
+            }
+            else if (time < level.timeFor3star)
+            {
+                Data.levels[Data.campaignLevel - 1].star = 2;
+                GameObject star = (GameObject)Instantiate(starV2, new Vector2(0, 50), Quaternion.identity);
+                star.transform.SetParent(Canvas.transform.Find("VictoryScreen"), false);
+            }
+            else 
+            {
+                Data.levels[Data.campaignLevel - 1].star = 3;
+                GameObject star = (GameObject)Instantiate(starV3, new Vector2(0, 50), Quaternion.identity);
+                star.transform.SetParent(Canvas.transform.Find("VictoryScreen"), false);
+            }
+        }
+        
+    }
+    void UpdateText()
+    {
+        keysText.text = countOfKeys.ToString();
+        timeText.text = level.totalTime--.ToString();
+
+    }
+    public void SetPause(bool pause)
+    {
+        isPaused = pause;
+    }
 
     void Update()
     {
@@ -219,7 +336,7 @@ public class GameEngine : MonoBehaviour
         height = Maze.GetLength(1) - 1;
         GameObject empty = new GameObject("Labyrinth");
         empty.isStatic = true;
-        empty.transform.position = new Vector3(0,0,0);
+        empty.transform.position = new Vector3(0, 0, 0);
 
         for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
@@ -247,6 +364,33 @@ public class GameEngine : MonoBehaviour
 
         plane.transform.position = new Vector3(width * 0.4f, -0.5f, height * 0.4f);
         //empty.transform.SetParent(empty.transform);
+
+    }
+
+    public void SaveLastGame()
+    {
+        LastGame game = new LastGame();
+        game.Maze = Maze;
+        game.playerPosition = p.transform.position;
+        game.keyLeft = 0;
+        game.keyTime = new float[1];
+        game.keyTime[0] = 1;
+        game.keysPosition = new Vector3[1];
+        game.keysPosition[0] = new Vector3(f.transform.position.x, 0, f.transform.position.z);
+        game.timeLeft = 30;
+
+        Data.lastGame = game;
     }
 
 }
+
+public struct Loc
+{
+    public bool left_wall, up_wall;
+}
+
+struct Wall
+{
+    public int x, y, dx, dy;
+}
+

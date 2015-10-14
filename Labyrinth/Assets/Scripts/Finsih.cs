@@ -4,21 +4,19 @@ using UnityEngine.UI;
 
 public class Finsih : MonoBehaviour 
 {
-    Text startText;
+    GameEngine gameEngine;
 
     void Start()    
     {
-        startText = GameObject.Find("OnStartText").GetComponent<Text>();
+        gameEngine = GameObject.Find("Game").GetComponent<GameEngine>();
     }
 
     void OnTriggerEnter(Collider other)
     {
-        //Debug.Log(other.name);
         if (other.name == "Player")
         {
+            gameEngine.KeyFounded();
             Destroy(this.gameObject);
-            Time.timeScale = 0;
-            startText.text = "You win!";
         }
         
     }
